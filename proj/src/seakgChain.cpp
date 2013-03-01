@@ -1,7 +1,7 @@
 #include "seakgChain.h"
 
 #include <iostream>
-seakgChain::seakgChain() : m_bError(false), m_strMsgError("") {
+seakgChain::seakgChain() : m_bError(false), m_strMsgError(""), m_bIncludeOnce(false) {
 };
 
 // ---------------------------------------------------------------------------
@@ -26,6 +26,13 @@ QString seakgChain::getStart() {
 QString seakgChain::getEnd() {
 	if(hasElements()) return m_chain[m_chain.count()-1];
 	return QString();
+};
+
+// ---------------------------------------------------------------------------
+
+void seakgChain::setIncludeOnce(bool b)
+{
+	m_bIncludeOnce = b;
 };
 
 // ---------------------------------------------------------------------------

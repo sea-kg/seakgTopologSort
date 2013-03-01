@@ -14,15 +14,17 @@ class seakgChain
 		QString getStart();
 		QString getEnd();
 		QString errorString();
+		void setIncludeOnce(bool);
 		bool hasError();
 		bool hasElements();
 		bool contains(QString strParent, QString strChild);
 		bool canMerge(seakgChain &);
 		void merge( seakgChain &chain );
 	private:
+		bool m_bIncludeOnce;
 		bool m_bError;
 		QString m_strMsgError;
-		
+
 		void check();
 		void checkToFront(QString strSome);
 		void checkToEnd(QString strSome);
