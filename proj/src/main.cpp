@@ -14,8 +14,15 @@ int main(int, char ** )
 	int max = 20;
 	seakgTopologSort topsort;
 	
+	std::cout << "digraph graphname {\n";
 	for(int i = 0; i < 15; i++)
-		topsort.push(QString::number(qrand() % max), QString::number(qrand() % max));
+	{
+		int t1 = qrand() % max;
+		int t2 = qrand() % max;
+		std::cout << "\t" << t1 << " -> " << t2 << ";\n";
+		topsort.push(QString::number(t1), QString::number(t2));
+	}
+	std::cout << "}\n";
 	
 	/*
 		topsort.push("a", "b");

@@ -1,0 +1,16 @@
+0) 17 -> 16
+1) 18 -> 4 -> 19
+2) 1 -> 2
+3) 14 -> 6
+4) 18 -> 3
+5) 11 -> 16
+6) 10 -> 9
+7) 14 -> 9
+8) 0 -> 0
+fixated sequence: 0 -> 0
+error: it is not contains pair 0 -> 0
+error: it is not contains pair 14 -> 2
+error: it is not contains pair 9 -> 17
+error: it is not contains pair 19 -> 11
+error: it is not contains pair 16 -> 6
+
