@@ -1,8 +1,13 @@
 #include "seakgTopologSort.h"
 #include <iostream>
 
-seakgTopologSort::seakgTopologSort() : m_bError(false), m_strError("") {
-	
+seakgTopologSort::seakgTopologSort(bool bIgnoreError)
+:
+	m_bError(false)
+	,m_strError("")
+	,m_bIgnoreError(bIgnoreError)
+{
+
 };
 
 // ---------------------------------------------------------------------------
@@ -11,19 +16,19 @@ void seakgTopologSort::push(QString strParent, QString strChild) {
 	{
 		mPair pair;
 		pair.strParent = strParent;
-		pair.strChild = strChild;  
+		pair.strChild = strChild;
 		m_Pairs.push_back(pair);
 	}
-	
+
 	if(hasError()) return;
-	
+
 	int nCount = 0;
 	bool bContains = false;
 	for(int i = 0; i < m_Chains.count(); i++)
 	{
 		if(m_Chains[i].add(strParent, strChild))
 			nCount++;
-		
+
 		if(m_Chains[i].contains(strParent, strChild)) bContains = true;
 			
 		if(m_Chains[i].hasError())

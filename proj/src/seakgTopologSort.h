@@ -6,7 +6,7 @@
 class seakgTopologSort
 {
 	public:
-		seakgTopologSort();
+		seakgTopologSort(bool bIgnoreError = false);
 		void push(QString strParent, QString strChild);
 		QString errorString();
 		bool hasError();
@@ -16,7 +16,7 @@ class seakgTopologSort
 	private:
 		bool m_bError;
 		bool refactoring();
-		
+
 		QList<seakgChain> m_Chains;
 		QString m_strError;
 		struct mPair
@@ -28,8 +28,9 @@ class seakgTopologSort
 				return strParent + " -> " + strChild;
 			};
 		};
-		
+
 		QList<mPair> m_Pairs;
+		bool m_bIgnoreError;
 };
 
 #endif // __SEAKGTOPOLOGSORT_H__
