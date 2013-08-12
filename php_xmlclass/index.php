@@ -34,12 +34,38 @@
 
 <?
 
+class Element
+{
+	function setName($name) {
+	
+	}
+	
+	function name() {
+	
+	}
+	
+	function addAttributeName($name) {
+	
+	}
+	
+	function addChildName($name) {
+	
+	}
+	
+	function write($elements)
+	{
+	
+	}
+};
+
+$elements = array();
+
 function parse_xmlclass($xml, $root = true, $ident = "")
 {
 	if($root) echo "<pre>\n";
 	echo $ident."struct ";
 	if(!$root) echo "_";
-	echo $xml->getName()."{ \n";
+	echo $xml->getName()." { \n";
 	
 	if($xml->children()->count() == 0)
 	{
@@ -50,8 +76,7 @@ function parse_xmlclass($xml, $root = true, $ident = "")
 	if($xml->attributes()->count() > 0)
 	{
 		foreach($xml->attributes() as $attrname => $attrvalue) {
-		    echo "1";
-			echo $ident."\t\tQString ".$attrname."; // default value = $attrvalue \n";
+			echo $ident."\t\tQString ".$attrname; // ."; // default value = $attrvalue \n";
 		}
 	}
 	echo $ident."\t} Attributes;\n";
