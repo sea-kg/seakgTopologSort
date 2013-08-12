@@ -35,39 +35,39 @@
 <?
 function parse_xmlclass($xml, $root = true, $ident = "")
 {
-	if($root) echo '<pre>\n';
-	echo $ident.'struct ';	
-	if(!$root) echo '_';
-	echo $xml->getName().'{ \n';
+	if($root) echo "<pre>\n";
+	echo $ident."struct ";
+	if(!$root) echo "_";
+	echo $xml->getName()."{ \n";
 	
 	if($xml->children()->count() == 0)
 	{
 		echo $ident."\tQString Body;\n";
 	}
 	
-	echo $ident.'\tstruct _Attr_'.$xml->getName().' {\n';
+	echo $ident."\tstruct _Attr_".$xml->getName()." {\n";
 	if($xml->attributes()->count() > 0)
 	{
 		foreach($child->attributes() as $attrname => $attrvalue) {
+		    echo "1";
 			echo $ident."\t\tQString ".$attrname."; // default value = $attrvalue \n";
 		}
 	}
-	echo $ident.'\t} Attributes;\n';
+	echo $ident."\t} Attributes;\n";
 	
 	foreach($xml->children() as $child)
 	{
-		parse_xmlclass($child, false, $ident.'\t');
+		parse_xmlclass($child, false, $ident."\t");
 	}
 	echo "} ";
-	if(!$root) echo $xml->getName().';\n' else ';\n</pre>';
-}
+	if(!$root) echo $xml->getName().";\n" else ";\n</pre>";
+};
 
 	echo "Привет, мир!";
 	// http://php.net/manual/en/book.simplexml.php
 	$xmlfile = "test.xml";
     $xml = simplexml_load_file($xmlfile);
 	//var_dump($xml);
-	
 	// $xml->getNamespace();
 	parse_xmlclass($xml);
 ?>
