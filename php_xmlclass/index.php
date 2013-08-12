@@ -1,6 +1,6 @@
 <html>
 <head>
-<title> collection my films </title>
+<title> generate class from xml </title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf8">
 </head>
 <body>
@@ -33,6 +33,7 @@
 </form>
 
 <?
+
 function parse_xmlclass($xml, $root = true, $ident = "")
 {
 	if($root) echo "<pre>\n";
@@ -48,7 +49,7 @@ function parse_xmlclass($xml, $root = true, $ident = "")
 	echo $ident."\tstruct _Attr_".$xml->getName()." {\n";
 	if($xml->attributes()->count() > 0)
 	{
-		foreach($child->attributes() as $attrname => $attrvalue) {
+		foreach($xml->attributes() as $attrname => $attrvalue) {
 		    echo "1";
 			echo $ident."\t\tQString ".$attrname."; // default value = $attrvalue \n";
 		}
@@ -60,7 +61,7 @@ function parse_xmlclass($xml, $root = true, $ident = "")
 		parse_xmlclass($child, false, $ident."\t");
 	}
 	echo "} ";
-	if(!$root) echo $xml->getName().";\n" else ";\n</pre>";
+	if(!$root) echo $xml->getName().";\n"; else echo ";\n</pre>";
 };
 
 	echo "Привет, мир!";
@@ -69,7 +70,9 @@ function parse_xmlclass($xml, $root = true, $ident = "")
     $xml = simplexml_load_file($xmlfile);
 	//var_dump($xml);
 	// $xml->getNamespace();
+	echo "</center>";
 	parse_xmlclass($xml);
+	echo "<center>";
 ?>
 
 </body>
