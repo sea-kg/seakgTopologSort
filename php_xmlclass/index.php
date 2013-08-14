@@ -57,6 +57,14 @@ class Element
 		return $this->name;
 	}
 	
+	function print_debug()
+	{
+		foreach($this->attr as $attrname => $val )
+		{
+			echo $attrname;
+		};
+	}
+	
 	function reset()
 	{
 		foreach($this->attr as $attrname)
@@ -135,6 +143,10 @@ function parse_xmlclass($xml, $root = true, $ident = "")
 	
 	if($root)
 	{
+		foreach($elements as $elem_name => $elem_) {
+			echo "Element name: ".$elem_name."<br>";
+			
+		}
 		var_dump($elements);	
 	}
 };
