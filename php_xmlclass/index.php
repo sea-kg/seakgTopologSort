@@ -2,15 +2,41 @@
 <head>
 <title> generate class from xml </title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf8">
+
+<script type="text/javascript">
+	function getComboA(sel) {
+		 // var value = sel.options[sel.selectedIndex].value;
+
+		 var value = {
+		 	0 : "<input type='file' value=''/>",
+		 	1 : "<textarea />"
+		 };
+		 document.getElementById("xml_i").innerHTML = value[sel.selectedIndex];
+	};
+	
+	function init_v()
+	{
+		getComboA(document.getElementById("xml_input"));
+	
+	};
+	
+</script>
+
 </head>
-<body>
+<body onload="init_v();">
 <center>
 <form action='form-handler.php' method='post' enctype='multipart/form-data'>
 <table>
 	<tr>
-		<td>XML-file: </td>
-		<td><input type='file' value=''/></td>
+		<td>XML: </td>
+		<td>
+			<select id='xml_input' name='xml_input' id="comboA" onchange="getComboA(this)">
+				<option id='fromfile'>from file</option>
+				<option id='fromtext'>text</option>
+			</select><br>		
+		</td>
 	</tr>
+	<tr> <td/> <td> <div id='xml_i'/> </td> </tr>
 	<tr>
 		<td>Select language:</td>
 		<td>
@@ -48,48 +74,140 @@ class Element
 {
 	var $name;
 	var $attr = array();
+	var $elems = array();
+	var $body = false;
+	
+	// ------------------------------------------ 
 	
 	function setName($name) {
 		$this->name = $name;
 	}
 	
+	// ------------------------------------------ 
+	
 	function name() {
 		return $this->name;
 	}
+
+	// ------------------------------------------ 
+		
+	function classname() {
+		return "_XMLElem_".$this->name;
+	}
+
+	// ------------------------------------------ 
 	
 	function print_debug()
-	{
-		foreach($this->attr as $attrname => $val )
+	{	
+		echo "";
+		
+		$temp;
+
+		$temp .= 'class _XMLElem_'.$this->name." {\n\n".
+		"\tpublic:\n\n";
+		
+		
+		
+
+		if(count($this->attr) > 0)
 		{
-			echo $attrname;
+			$temp .= "\t\tstruct _XMLAttr_".$this->name." {\n";
+			foreach($this->attr as $attrname => $attrval )
+			{
+				if($attrval > 1)
+					$temp .= "\t\t\tQStringList ".$attrname."s; // attrval = $attrval\n";
+				else 
+					$temp .= "\t\t\tQString ".$attrname."; // attrval = $attrval\n";
+			};
+			$temp .= "\t\t} Attributes;\n\n";
 		};
+		
+		$temp .= ($this->body ? "\t\tQString Body;\n\n" : "");
+		
+		
+		foreach($this->elems as $elemname => $elemval )
+		{
+			if($elemval > 1)
+				$temp .= "\t\tQList<_XMLElem_".$elemname."> ".$elemname."s; // elemval = $elemval \n";
+			else
+				$temp .= "\t\t_XMLElem_".$elemname." ".$elemname."; // elemval = $elemval \n";
+			//echo 'Subelement name: '.$elemname.'; Subelement value='.$elemval.';<br>';
+		};
+		$temp .= "};\n";
+		
+		echo "<pre>".htmlspecialchars($temp)."</pre>";
 	}
+	
+	// ------------------------------------------ 
 	
 	function reset()
 	{
-		foreach($this->attr as $attrname)
+		foreach($this->attr as $attrname => $attrval)
 		{
-			$val = $this->attr[$attrname];
-			if( $val == 1 || $val == 0)
-				$this->attr[$attrname] = 0;
+			// $val = $this->attr[$attrname];
+			if( $attrval == 1 || $attrval == 0)
+			   $this->attr[$attrname] = 0;
 			else
-				$this->attr[$attrname] = $val-1;
+				$this->attr[$attrname] = 2;
 		};
 		
+		
+		foreach($this->elems as $elemname => $elemval)
+		{
+			if( $elemval == 0 || $elemval == 1)
+				$this->elems[$elemname] = 0;
+			else if($elemval > 1)
+				$this->elems[$elemname] = 2;
+		};
 		/*foreach($this->attr as $attrname)
 			$this->attr[$attrname] = 0;*/
 	}
 	
-	function addAttributeName($name) {
-		if(isset($attr[$name]))
-			$attr[$name] = $attr[$name] + 1;
-		else
-			$attr[$name] = 0;
+	// ------------------------------------------ 
+	
+	function merge($elem)
+	{
+		foreach($elem->elems as $elemname => $elemval)
+		{
+			if(isset($this->elems[$elemname]))
+			{
+				$our_elemval = $this->elems[$elemname];
+				$this->elems[$elemname] = ($our_elemval >= $elemval) ? $our_elemval : $elemval;
+			}
+			else
+				$this->elems[$elemname] = $elemval;
+		};	
 	}
 	
-	function addChildName($name) {
-		
+	// ------------------------------------------ 
+	
+	function addAttributeName($name) {
+		if(isset($this->attr[$name]))
+			$this->attr[$name]++;
+		else
+			$this->attr[$name] = 1;
 	}
+	
+	// ------------------------------------------ 
+		
+	function addSubElement($name) {
+
+		if(isset($this->elems[$name]))
+			$this->elems[$name] = $this->elems[$name] + 1;
+		else
+			$this->elems[$name] = 1;	
+			
+		echo "<h1>$name ".$this->elems[$name]."</h1>";
+	}
+	
+	// ------------------------------------------ 
+	
+	function setBody($b)
+	{
+		$this->body = $b;
+	}
+	
+	// ------------------------------------------ 
 	
 	function write($elements)
 	{
@@ -97,9 +215,11 @@ class Element
 	}
 };
 
-$elements = array();
+// ------------------------------------------ 
 
-function parse_xmlclass($xml, $root = true, $ident = "")
+// $elements = array();
+
+function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 {
 	if($root) echo "<pre>\n";
 	echo $ident."struct ";
@@ -107,24 +227,27 @@ function parse_xmlclass($xml, $root = true, $ident = "")
 	echo $xml->getName()." { \n";
 	
 	$obj;
-	
-	if(!isset($elements[$xml->getName()]))
+	$xmlName = $xml->getName();
+	if(isset($elements[$xmlName]))
+	  $obj = $elements[$xmlName];
+	else
 	{
 		$obj = new Element();
-		$obj->setName($xml->getName());
-		$elements[$obj->name()] = $obj;
+		$obj->setName($xmlName);
+		$elements[$xmlName] = $obj;
 	}
-	else
-		$obj = $elements[$xml->getName()];
-	
+
+	// var_dump($elements);
+
 	$obj->reset();
 	
 	if($xml->children()->count() == 0)
 	{
+		$obj->setBody(true);
 		echo $ident."\tQString Body;\n";
 	}
 	
-	echo $ident."\tstruct _Attr_".$xml->getName()." {\n";
+	echo $ident."\tstruct _XMLAttr_".$xml->getName()." {\n";
 	if($xml->attributes()->count() > 0)
 	{
 		foreach($xml->attributes() as $attrname => $attrvalue) {
@@ -133,33 +256,60 @@ function parse_xmlclass($xml, $root = true, $ident = "")
 		}
 	}
 	echo $ident."\t} Attributes;\n";
-	
+
 	foreach($xml->children() as $child)
 	{
-		parse_xmlclass($child, false, $ident."\t");
+		$obj->addSubElement($child->getName());
+		$elements = parse_xmlclass($elements, $child, false, $ident."\t");
+		// $elements = parse_xmlclass($child, false, $ident."\t");
 	}
 	echo $ident."} ";
-	if(!$root) echo $xml->getName().";\n"; else echo ";\n</pre>";
 	
+	// TODO: merge objects
+	// $obj->reset();
+	// $elements[$obj->name()]->reset();
+	// $elements[$obj->name()]->merge($obj);
+	
+	if(!$root) echo $xml->getName().";\n"; else echo ";\n</pre>";
+
 	if($root)
 	{
-		foreach($elements as $elem_name => $elem_) {
-			echo "Element name: ".$elem_name."<br>";
-			
+	   //var_dump($elements);
+	   	
+	   echo "<hr/><pre>";
+
+	   foreach($elements as $elem_name => $elem) {
+		   $elem->reset();
+			echo "class ".$elem->classname().";\n";
 		}
-		var_dump($elements);	
+		
+		
+		foreach($elements as $elem_name => $elem) {
+			$elem->print_debug();
+			echo "\n//-------------------------------\n\n";
+		}
+		echo "</pre>";
+		
+		// var_dump($elements);	
 	}
+	return $elements;
 };
 
 	echo "Привет, мир!";
 	// http://php.net/manual/en/book.simplexml.php
-	$xmlfile = "test.xml";
-    $xml = simplexml_load_file($xmlfile);
+	$xmlfile = "test.xml";	
+   $xml = simplexml_load_file($xmlfile);
 	//var_dump($xml);
 	// $xml->getNamespace();
 	echo "</center>";
-	parse_xmlclass($xml);
+	
+	echo 'XML: <pre>'.htmlspecialchars(file_get_contents($xmlfile)).'</pre>Structure:';
+	
+	$elements = array();
+	$elements = parse_xmlclass($elements, $xml);
+	// parse_xmlclass($xml);
 	echo "<center>";
+	
 ?>
 
 </body>
