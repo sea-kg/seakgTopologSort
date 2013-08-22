@@ -92,45 +92,51 @@ class Element
 	// ------------------------------------------ 
 		
 	function classname() {
-		return "_XMLElem_".$this->name;
+		return "_".$this->name;
 	}
 
 	// ------------------------------------------ 
 	
 	function print_debug()
 	{	
-		echo "";
-		
 		$temp;
 
-		$temp .= 'class _XMLElem_'.$this->name." {\n\n".
+		$temp .= 'class '.$this->classname()." {\n\n".
 		"\tpublic:\n\n";
 		
-		
-		
-
 		if(count($this->attr) > 0)
 		{
+			$temp .= "\t\t// attributes \n";
+			foreach($this->attr as $attrname => $attrval )
+			{
+				if($attrval > 1)
+					$temp .= "\t\tQStringList ".$attrname."s; \n";
+				else 
+					$temp .= "\t\tQString ".$attrname.";\n";
+			};
+			$temp .= "\n\t\t// elements\n";
+			
+			/*
 			$temp .= "\t\tstruct _XMLAttr_".$this->name." {\n";
 			foreach($this->attr as $attrname => $attrval )
 			{
 				if($attrval > 1)
-					$temp .= "\t\t\tQStringList ".$attrname."s; // attrval = $attrval\n";
+					$temp .= "\t\t\tQStringList ".$attrname."s; \n";
 				else 
-					$temp .= "\t\t\tQString ".$attrname."; // attrval = $attrval\n";
+					$temp .= "\t\t\tQString ".$attrname.";\n";
 			};
 			$temp .= "\t\t} Attributes;\n\n";
+			*/
 		};
 		
 		$temp .= ($this->body ? "\t\tQString Body;\n\n" : "");
-		
-		
+
 		foreach($this->elems as $elemname => $elemval )
 		{
 			if($elemval > 1)
-				$temp .= "\t\tQList<_XMLElem_".$elemname."> ".$elemname."s; // elemval = $elemval \n";
+				$temp .= "\t\tQList<_".$elemname."> ".$elemname."s;\n";
 			else
-				$temp .= "\t\t_XMLElem_".$elemname." ".$elemname."; // elemval = $elemval \n";
+				$temp .= "\t\t_".$elemname." ".$elemname."; \n";
 			//echo 'Subelement name: '.$elemname.'; Subelement value='.$elemval.';<br>';
 		};
 		$temp .= "};\n";
@@ -257,9 +263,12 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 	}
 	echo $ident."\t} Attributes;\n";
 
+	foreach($xml->children() as $child)	
+		$obj->addSubElement($child->getName());	
+	
 	foreach($xml->children() as $child)
 	{
-		$obj->addSubElement($child->getName());
+		// $obj->addSubElement($child->getName());
 		$elements = parse_xmlclass($elements, $child, false, $ident."\t");
 		// $elements = parse_xmlclass($child, false, $ident."\t");
 	}
@@ -268,7 +277,7 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 	// TODO: merge objects
 	// $obj->reset();
 	// $elements[$obj->name()]->reset();
-	// $elements[$obj->name()]->merge($obj);
+	$elements[$obj->name()]->merge($obj);
 	
 	if(!$root) echo $xml->getName().";\n"; else echo ";\n</pre>";
 
@@ -278,13 +287,15 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 	   	
 	   echo "<hr/><pre>";
 
-	   foreach($elements as $elem_name => $elem) {
+		$arr = array_reverse($elements);
+
+	   foreach($arr as $elem_name => $elem) {
 		   $elem->reset();
 			echo "class ".$elem->classname().";\n";
 		}
 		
 		
-		foreach($elements as $elem_name => $elem) {
+		foreach($arr as $elem_name => $elem) {
 			$elem->print_debug();
 			echo "\n//-------------------------------\n\n";
 		}

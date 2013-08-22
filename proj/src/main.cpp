@@ -5,6 +5,8 @@
 #include <iostream>
 
 #include "seakgTopologSort.h"
+#include "autocode.h"
+
 
 // ---------------------------------------------------------------------------
 int main(int, char ** )
