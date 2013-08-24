@@ -101,8 +101,10 @@ class Element
 	{	
 		$temp;
 
-		$temp .= 'class '.$this->classname()." {\n\n".
+		$temp .= 'class '.$this->classname()." : public _specXMLElement {\n\n".
 		"\tpublic:\n\n";
+		
+		$temp .= "\t\tvirtual QString nameOfElement() { return \"".$this->name."\"; };\n\n";
 		
 		if(count($this->attr) > 0)
 		{
@@ -203,7 +205,7 @@ class Element
 		else
 			$this->elems[$name] = 1;	
 			
-		echo "<h1>$name ".$this->elems[$name]."</h1>";
+		// echo "<h1>$name ".$this->elems[$name]."</h1>";
 	}
 	
 	// ------------------------------------------ 
@@ -227,11 +229,11 @@ class Element
 
 function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 {
-	if($root) echo "<pre>\n";
+	/*if($root) echo "<pre>\n";
 	echo $ident."struct ";
 	if(!$root) echo "_";
 	echo $xml->getName()." { \n";
-	
+	*/
 	$obj;
 	$xmlName = $xml->getName();
 	if(isset($elements[$xmlName]))
@@ -250,18 +252,18 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 	if($xml->children()->count() == 0)
 	{
 		$obj->setBody(true);
-		echo $ident."\tQString Body;\n";
+		// echo $ident."\tQString Body;\n";
 	}
 	
-	echo $ident."\tstruct _XMLAttr_".$xml->getName()." {\n";
+	// echo $ident."\tstruct _XMLAttr_".$xml->getName()." {\n";
 	if($xml->attributes()->count() > 0)
 	{
 		foreach($xml->attributes() as $attrname => $attrvalue) {
 			$obj->addAttributeName($attrname);
-			echo $ident."\t\tQString ".$attrname.";\n"; // ."; // default value = $attrvalue \n";
+			// echo $ident."\t\tQString ".$attrname.";\n"; // ."; // default value = $attrvalue \n";
 		}
 	}
-	echo $ident."\t} Attributes;\n";
+	// echo $ident."\t} Attributes;\n";
 
 	foreach($xml->children() as $child)	
 		$obj->addSubElement($child->getName());	
@@ -272,39 +274,163 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 		$elements = parse_xmlclass($elements, $child, false, $ident."\t");
 		// $elements = parse_xmlclass($child, false, $ident."\t");
 	}
-	echo $ident."} ";
+	// echo $ident."} ";
 	
-	// TODO: merge objects
 	// $obj->reset();
 	// $elements[$obj->name()]->reset();
 	$elements[$obj->name()]->merge($obj);
 	
-	if(!$root) echo $xml->getName().";\n"; else echo ";\n</pre>";
+	// if(!$root) echo $xml->getName().";\n"; else echo ";\n</pre>";
 
 	if($root)
 	{
-	   //var_dump($elements);
-	   	
-	   echo "<hr/><pre>";
-
-		$arr = array_reverse($elements);
-
-	   foreach($arr as $elem_name => $elem) {
-		   $elem->reset();
-			echo "class ".$elem->classname().";\n";
-		}
-		
-		
-		foreach($arr as $elem_name => $elem) {
-			$elem->print_debug();
-			echo "\n//-------------------------------\n\n";
-		}
-		echo "</pre>";
-		
-		// var_dump($elements);	
+	   //var_dump($elements);		
+	   // var_dump($elements);	
 	}
 	return $elements;
 };
+
+
+function print_source($elements)
+{
+	echo "<hr/><pre>";
+
+	$arr = array_reverse($elements);
+
+	$classnameroot = "";
+	$nameroot = "";
+
+	foreach($arr as $elem_name => $elem) {
+		$elem->reset();
+		echo "class ".$elem->classname().";\n";
+		$classnameroot = $elem->classname();
+		$nameroot = $elem->name();
+	}
+
+echo "
+class _specXMLElement {
+	public:
+		virtual QString nameOfElement() { return \"\"; };
+		virtual bool hasBody() { return false; };
+		virtual bool setBody(QString body) {};
+		virtual bool setAttribute(QString name, QString value) { };
+		virtual bool addElement(QString name, _specXMLElement *) { };
+};
+";
+	
+	foreach($arr as $elem_name => $elem) {
+		$elem->print_debug();
+		echo "\n//-------------------------------\n";
+	}
+	
+	
+	foreach($arr as $elem_name => $elem) {
+		$cn = $elem->classname();
+		$n = $elem->name();
+		echo 
+$cn." readElement".$n."(QXmlStreamReader &xmlReader) {
+	".$cn." elem;
+	
+	return elem; 
+};\n";
+	}
+
+ // echo function for create element
+echo "
+_specXMLElement * createElement(QString strName) {
+";
+
+	foreach($arr as $elem_name => $elem) {
+			$cn = $elem->classname();
+			$n = $elem->name();
+			
+			echo "
+	if(strName == \"$n\") return new $cn();";
+	}
+echo "
+};";
+		
+	echo "
+	
+bool readFromXML(QString fileXml, ".$classnameroot." &root)
+{
+	QFile file(fileXml);
+	QXmlStreamReader xmlReader;
+	
+	QString line;
+	if ( !file.open(QIODevice::ReadOnly) )
+		return false;
+	
+	{
+		QTextStream t( &file );
+		// stream.setCodec(\"CP-866\");
+		xmlReader.addData(t.readAll());
+	}	
+	
+	QStack<_specXMLElement *> stackElements;
+	
+	while(!xmlReader.atEnd()) 
+	{
+		if(xmlReader.isCharacters() && stackElements.count() != 0)
+		{
+			_specXMLElement *pElemTop = stackElements.top();
+			if(pElemTop->hasBody())
+			  pElemTop->setBody(xmlReader.readElementText());
+		}
+		
+		if(xmlReader.isStartElement())
+		{ 
+			QString strName = xmlReader.name().toString();
+			
+			// _specXMLElement *parentElem = (stackElements.count() != 0) ? stackElements.top() : NULL;
+			_specXMLElement *elem = createElement(xmlReader.name().toString());
+			stackElements.push(elem);
+			
+			for(int i = 0;  i < xmlReader.attributes().count(); i++)
+			{
+				QXmlStreamAttribute attr = xmlReader.attributes().at(i);
+				elem->setAttribute(attr.name().toString(), attr.value().toString());
+			}
+		}
+		
+		if(xmlReader.isEndElement())
+		{
+			stackElements.pop();
+		}
+		xmlReader.readNext();
+		
+		/*
+";
+		
+	foreach($arr as $elem_name => $elem) {
+			$cn = $elem->classname();
+			$n = $elem->name();
+			
+			echo "
+			if(strName == \"$n\") 
+			{
+				$cn elem = readElement".$n."(xmlReader);
+			};";
+		}
+	
+echo
+"*/
+	};
+	
+	if(xmlReader.hasError())
+	{
+		return false;
+		// std::cout << xmlReader.errorString().toStdString();
+	}
+	*/
+	
+	return true;
+};";
+	
+	echo "</pre>";
+}
+
+
 
 	echo "Привет, мир!";
 	// http://php.net/manual/en/book.simplexml.php
@@ -314,12 +440,15 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 	// $xml->getNamespace();
 	echo "</center>";
 	
-	echo 'XML: <pre>'.htmlspecialchars(file_get_contents($xmlfile)).'</pre>Structure:';
+	echo 'XML: <pre>'.htmlspecialchars(file_get_contents($xmlfile)).'</pre>Source code:';
 	
 	$elements = array();
 	$elements = parse_xmlclass($elements, $xml);
 	// parse_xmlclass($xml);
+	print_source($elements);
 	echo "<center>";
+	
+	
 	
 ?>
 
