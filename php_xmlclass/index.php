@@ -8,8 +8,8 @@
 		 // var value = sel.options[sel.selectedIndex].value;
 
 		 var value = {
-		 	0 : "<input type='file' value=''/>",
-		 	1 : "<textarea />"
+		 	0 : "<input type='file' name='data_xml' value=''/>",
+		 	1 : "<textarea name='data_xml' />"
 		 };
 		 document.getElementById("xml_i").innerHTML = value[sel.selectedIndex];
 	};
@@ -41,23 +41,27 @@
 		<td>Select language:</td>
 		<td>
 			<select name='lang'>
-				<option>C++ && Qt 5.1 (QXmlReader, QXmlWriter)</option>
-				<option>C++ Builder XE3</option>
+				<option name='cpp_qt_useqxml' >C++ && Qt 5.1 (QXmlReader, QXmlWriter)</option>
+				<option name='cpp_cbuilderxe3_usexml'>C++ Builder XE3</option>
 			</select>
 		</td>
 	</tr>
 	<tr>
-		<td>Select language:</td>
+		<td>Select output type:</td>
 		<td>
-			<select name='typeview'>
-				<option>On Page</option>
-				<option>*.zip</option>
+			<select name='outputtype'>
+				<option name='onpage'>On Page</option>
+				<option name='zipfile'>*.zip</option>
 			</select>
 		</td>
 	</tr>	
 	<tr>
+		<td>filename: </td>
+		<td><input name='outputfilename' type='text' value=''/></td>
+	</tr>
+	<tr>
 		<td>rename class <br> or namespace: </td>
-		<td><input name='rename' type='text' value=''/></td>
+		<td><input name='renameclass' type='text' value=''/></td>
 	</tr>
 
 	<tr>
