@@ -99,24 +99,31 @@ class Element
 	
 	function print_debug()
 	{	
-		$temp;
+		$temp_h;
 
-		$temp .= 'class '.$this->classname()." : public _specXMLElement {\n\n".
+		$temp_h .= 'class '.$this->classname()." : public _specXMLElement {\n\n".
 		"\tpublic:\n\n";
 		
-		$temp .= "\t\tvirtual QString nameOfElement() { return \"".$this->name."\"; };\n\n";
+		$temp_h .= "
+		// _specXMLElement
+		virtual QString nameOfElement();
+		virtual bool hasBody();
+		virtual bool setBody(QString body);
+		virtual bool setAttribute(QString name, QString value);
+		virtual bool addChildElement(QString name, _specXMLElement *);
+\n";
 		
 		if(count($this->attr) > 0)
 		{
-			$temp .= "\t\t// attributes \n";
+			$temp_h .= "\t\t// attributes \n";
 			foreach($this->attr as $attrname => $attrval )
 			{
 				if($attrval > 1)
-					$temp .= "\t\tQStringList ".$attrname."s; \n";
+					$temp_h .= "\t\tQStringList ".$attrname."s; \n";
 				else 
-					$temp .= "\t\tQString ".$attrname.";\n";
+					$temp_h .= "\t\tQString ".$attrname.";\n";
 			};
-			$temp .= "\n\t\t// elements\n";
+			$temp_h .= "\n\t\t// elements\n";
 			
 			/*
 			$temp .= "\t\tstruct _XMLAttr_".$this->name." {\n";
@@ -131,19 +138,108 @@ class Element
 			*/
 		};
 		
-		$temp .= ($this->body ? "\t\tQString Body;\n\n" : "");
+		$temp_h .= ($this->body ? "\t\tQString Body;\n\n" : "");
 
 		foreach($this->elems as $elemname => $elemval )
 		{
 			if($elemval > 1)
-				$temp .= "\t\tQList<_".$elemname."> ".$elemname."s;\n";
+				$temp_h .= "\t\tQList<_".$elemname." *> ".$elemname."s;\n";
 			else
-				$temp .= "\t\t_".$elemname." ".$elemname."; \n";
+				$temp_h .= "\t\t_".$elemname." * ".$elemname."; \n";
 			//echo 'Subelement name: '.$elemname.'; Subelement value='.$elemval.';<br>';
 		};
-		$temp .= "};\n";
+		$temp_h .= "};\n";
 		
-		echo "<pre>".htmlspecialchars($temp)."</pre>";
+		echo "<pre>".htmlspecialchars($temp_h)."</pre>";
+		
+		$temp_cpp;
+		
+		// name of element
+		// has body
+		
+		$classname = $this->classname();
+		$name = $this->classname();
+		{
+			$temp_cpp .= "
+
+//-------------------------------
+
+QString $classname::nameOfElement() {
+	return \"".$this->name."\";
+};
+
+//-------------------------------
+
+bool $classname::hasBody() {
+	return ".($this->body ? "true" : "false").";
+};
+
+//-------------------------------
+
+bool $classname::setBody(QString ".($this->body ? "body" : "/*body*/" ).") {
+	".($this->body ? "Body = body;
+	return true;" : " return false;")."
+};
+
+//-------------------------------
+
+bool $classname::setAttribute";
+			
+			if(count($this->attr) > 0)
+			{
+				$temp_cpp .= "(QString name, QString value) {\n";
+
+				$temp_sch = 0;
+				foreach($this->attr as $attrname => $attrval )
+				{
+					$temp_cpp .= "\t".($temp_sch > 0 ? "else " : "")."if(name == \"$attrname\")\n\t\t";
+					if($attrval > 1)
+						$temp_cpp .= $attrname."s << value;";
+					else 
+						$temp_cpp .= $attrname." = value;";
+					$temp_cpp .= "\n";
+					$temp_sch++;
+				};
+				$temp_cpp .= "\telse\n\t\treturn false;\n\treturn true;";
+			}
+			else
+			{
+					$temp_cpp .= "(QString /*name*/, QString /*value*/) {\n\treturn false;\n};\n";
+			};
+			
+			$temp_cpp .= "\n}\n\n//-------------------------------\n\nbool $classname::addChildElement"; 
+			if(count($this->elems) > 0)
+			{
+				$temp_cpp .= "(QString strName, _specXMLElement *pElem) {\n";
+				$temp_sch = 0;
+				foreach($this->elems as $elemname => $elemval )
+				{
+					$temp_cpp .= "\t".($temp_sch > 0 ? "else " : "")."if(strName == \"$elemname\") {\n\t\t";
+					if($elemval > 1)
+					{
+						$temp_cpp .= $this->classname()." *p = dynamic_cast<_".$elemname." *>(pElem);\n\t\t";
+						$temp_cpp .= "if(p == NULL) return false;\n\t\t";
+						$temp_cpp .= $elemname."s << p;";
+					}
+					else
+						$temp_cpp .= $elemname." = dynamic_cast<_".$elemname." *>(pElem);";
+					$temp_cpp .= "\n\t}\n";
+					$temp_sch++;
+				};
+				$temp_cpp .= "\telse\n\t\treturn false;\n\treturn true;";
+				$temp_cpp .= "\n};\n";
+			}
+			else
+			{
+				$temp_cpp .= "(QString /*strName*/, _specXMLElement */*pElem*/) {\n\treturn false;\n};";
+			}
+		}
+		
+		
+		
+		$temp_cpp .= "";
+		
+		echo "<pre>".htmlspecialchars($temp_cpp)."</pre>";
 	}
 	
 	// ------------------------------------------ 
@@ -295,6 +391,19 @@ function print_source($elements)
 {
 	echo "<hr/><pre>";
 
+	$includes = 
+"#include <QFile>
+#include <QStack>
+#include <QList>
+#include <QString>
+#include <QStringList>
+#include <QXmlStreamReader>
+#include <QTextStream>
+
+
+";
+	echo htmlspecialchars($includes); 
+
 	$arr = array_reverse($elements);
 
 	$classnameroot = "";
@@ -312,10 +421,10 @@ class _specXMLElement {
 	public:
 		virtual QString nameOfElement() { return \"\"; };
 		virtual bool hasBody() { return false; };
-		virtual bool setBody(QString body) {};
-		virtual bool setAttribute(QString name, QString value) { };
-		virtual bool addElement(QString name, _specXMLElement *) { };
-};
+		virtual bool setBody(QString /*body*/) { return false; };
+		virtual bool setAttribute(QString /*name*/, QString /*value*/) { return false; };
+		virtual bool addChildElement(QString /*name*/, _specXMLElement * /*pElem*/) { return false; };
+};</pre>
 ";
 	
 	foreach($arr as $elem_name => $elem) {
@@ -323,7 +432,7 @@ class _specXMLElement {
 		echo "\n//-------------------------------\n";
 	}
 	
-	
+/*	
 	foreach($arr as $elem_name => $elem) {
 		$cn = $elem->classname();
 		$n = $elem->name();
@@ -334,9 +443,10 @@ $cn." readElement".$n."(QXmlStreamReader &xmlReader) {
 	return elem; 
 };\n";
 	}
+*/
 
  // echo function for create element
-echo "
+echo " <pre>
 _specXMLElement * createElement(QString strName) {
 ";
 
@@ -348,16 +458,18 @@ _specXMLElement * createElement(QString strName) {
 	if(strName == \"$n\") return new $cn();";
 	}
 echo "
+	return NULL;
 };";
 		
 	echo "
 	
 bool readFromXML(QString fileXml, ".$classnameroot." &root)
 {
+	// init xml stream
 	QFile file(fileXml);
 	QXmlStreamReader xmlReader;
 	
-	QString line;
+	//QString line;
 	if ( !file.open(QIODevice::ReadOnly) )
 		return false;
 	
@@ -367,8 +479,8 @@ bool readFromXML(QString fileXml, ".$classnameroot." &root)
 		xmlReader.addData(t.readAll());
 	}	
 	
+	// start reading
 	QStack<_specXMLElement *> stackElements;
-	
 	while(!xmlReader.atEnd()) 
 	{
 		if(xmlReader.isCharacters() && stackElements.count() != 0)
@@ -381,9 +493,13 @@ bool readFromXML(QString fileXml, ".$classnameroot." &root)
 		if(xmlReader.isStartElement())
 		{ 
 			QString strName = xmlReader.name().toString();
+			_specXMLElement *elem = createElement(strName);
 			
-			// _specXMLElement *parentElem = (stackElements.count() != 0) ? stackElements.top() : NULL;
-			_specXMLElement *elem = createElement(xmlReader.name().toString());
+			_specXMLElement *parentElem = (stackElements.count() != 0) ? stackElements.top() : NULL;
+			
+			if(parentElem != NULL)
+				parentElem->addChildElement(strName,elem);
+
 			stackElements.push(elem);
 			
 			for(int i = 0;  i < xmlReader.attributes().count(); i++)
@@ -397,11 +513,10 @@ bool readFromXML(QString fileXml, ".$classnameroot." &root)
 		{
 			stackElements.pop();
 		}
-		xmlReader.readNext();
-		
-		/*
+		xmlReader.readNext();		
 ";
-		
+	/*	
+	echo "/*";
 	foreach($arr as $elem_name => $elem) {
 			$cn = $elem->classname();
 			$n = $elem->name();
@@ -412,20 +527,19 @@ bool readFromXML(QString fileXml, ".$classnameroot." &root)
 				$cn elem = readElement".$n."(xmlReader);
 			};";
 		}
-	
+	echo "* /";
+	*/
 echo
-"*/
-	};
+"\n\t};
 	
 	if(xmlReader.hasError())
 	{
 		return false;
 		// std::cout << xmlReader.errorString().toStdString();
 	}
-	*/
 	
 	return true;
-};";
+}; </pre>";
 	
 	echo "</pre>";
 }
