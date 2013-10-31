@@ -165,27 +165,4 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 	return $elements;
 };
 
-function generateFiles($data_xml, $output_filename)
-{
-	$files = Array();
-
-	// http://php.net/manual/en/book.simplexml.php
-	// $xmlfile = "test.xml";	
-	// $xml = simplexml_load_file($xmlfile);
-	//var_dump($xml);
-	// $xml->getNamespace();
-	// echo 'XML: <pre>'.htmlspecialchars(file_get_contents($xmlfile)).'</pre>Source code:';
-	$xml = simplexml_load_string($data_xml);
-	
-	$elements = array();
-	$elements = parse_xmlclass($elements, $xml);
-
-	$files[$output_filename.'.h'] = get_header($elements, $output_filename);
-	$files[$output_filename.'.cpp'] = get_source($elements, $output_filename);
-	
-	// parse_xmlclass($xml);
-	// print_source($elements);
-
-	return $files;
-};
 ?>
