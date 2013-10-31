@@ -82,9 +82,7 @@ class Element
 		if(isset($this->elems[$name]))
 			$this->elems[$name] = $this->elems[$name] + 1;
 		else
-			$this->elems[$name] = 1;	
-			
-		// echo "<h1>$name ".$this->elems[$name]."</h1>";
+			$this->elems[$name] = 1;
 	}
 	
 	// ------------------------------------------ 
@@ -104,11 +102,6 @@ class Element
 
 function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 {
-	/*if($root) echo "<pre>\n";
-	echo $ident."struct ";
-	if(!$root) echo "_";
-	echo $xml->getName()." { \n";
-	*/
 	$obj = "";
 	$xmlName = $xml->getName();
 	if(isset($elements[$xmlName]))
@@ -120,17 +113,13 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 		$elements[$xmlName] = $obj;
 	}
 
-	// var_dump($elements);
-
 	$obj->reset();
 	
 	if($xml->children()->count() == 0)
 	{
 		$obj->setBody(true);
-		// echo $ident."\tQString Body;\n";
 	}
 	
-	// echo $ident."\tstruct _XMLAttr_".$xml->getName()." {\n";
 	if($xml->attributes()->count() > 0)
 	{
 		foreach($xml->attributes() as $attrname => $attrvalue) {
@@ -138,7 +127,6 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 			// echo $ident."\t\tQString ".$attrname.";\n"; // ."; // default value = $attrvalue \n";
 		}
 	}
-	// echo $ident."\t} Attributes;\n";
 
 	foreach($xml->children() as $child)	
 		$obj->addSubElement($child->getName());	
@@ -159,8 +147,7 @@ function parse_xmlclass($elements, $xml, $root = true, $ident = "")
 
 	if($root)
 	{
-	   //var_dump($elements);		
-	   // var_dump($elements);	
+	   //var_dump($elements);
 	}
 	return $elements;
 };
