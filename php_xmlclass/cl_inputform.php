@@ -102,6 +102,11 @@ echo
 			$typeOfInput = $_POST['xml_input'];
 			if($typeOfInput == "fromfile")
 			{
+				if(!isset($_FILES['data_xml']))
+				{
+					echo "I don't found file 'data_xml'\r\n";
+					exit;
+				}
 				if(file_exists($_FILES['data_xml']['tmp_name']))
 					$this->inputData = file_get_contents($_FILES['data_xml']['tmp_name']);
 			}

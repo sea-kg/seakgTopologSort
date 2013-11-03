@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Object id="345">
+    <!-- <Field name="key1" value="1"/>
+    <Field name="key2" value="2"/>
+    <Field name="key3" value="3"/>
+    <Field name="key4" value="4"/>
+    <Field name="key5" value="5"/>
+    <Field name="key6" value="6" Attr2=""/>  --> 
+    <Field name="key7" value="7">
+    <!--
+    	<Field id="1" Attr1='1'/>
+    		 <Field id="2" Attr2='1' Attr4='2'/>
+    		<Field id="2" Attr2='1'/>
+    	</Field> 
+    	-->
+    	
+    	<Field id="1" Attr1='1'>
+    		<Field id="2" Attr2='1' Attr5='2'/>
+    		<Field id="2" Attr2='1'/>
+    	</Field>    	
+    </Field>
+    <!-- <Field name="f"/> -->
+    <SQLSelect table="blabla"> select * from Objects where id=${id}</SQLSelect>
+</Object>
